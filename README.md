@@ -32,11 +32,11 @@ usage: java -jar <path-to-jar>
  -s <arg>    sample coefficient (0.10 - 1.0), default: 1.0
  -vo         visualize foreign key graph only, from the specified database```
  
-For example, if the directory /repos/grid-director/testData/cim contained several *.csv files you would type:
+For example, if the directory /testData/cim contained several *.csv files you would type:
 
-java -jar csvprofiler/build/libs/csvprofiler-1.0-SNAPSHOT.jar -d /repos/grid-director/testData/cim -db cim.db -k 2 -i 0.75 -s 0.25
+java -jar csvprofiler/build/libs/csvprofiler-1.0-SNAPSHOT.jar -d /testData/cim -db cim.db -k 2 -i 0.75 -s 0.25
 or
-./profiler.sh -d /repos/grid-director/testData/cim -db cim.db -k 2 -i 0.75 -oj > cim.json
+./profiler.sh -d /testData/cim -db cim.db -k 2 -i 0.75 -oj > cim.json
 
 
 This utility is for internal use only, not for distribution, because it uses the GPL licensed graphstream library for graph display.
