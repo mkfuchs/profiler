@@ -113,7 +113,7 @@ class Main {
         cliOptions.addOption("db", true,
                 "sqlite database (.db), file default: <current path>/csvprofiler.db");
         cliOptions.addOption("k", true, "maximum unique key size (1 - 5), default: 2");
-        cliOptions.addOption("kd", true, "minimum key density non-null count/ total count, 0.0 - 1.0, defalt 1.0");
+        cliOptions.addOption("kd", true, "minimum key density non-null count/ total count, 0.0 - 1.0, default 1.0");
         cliOptions.addOption("i", true,
                 "foreign key inclusion coefficient (0.0 - 1.0), default: 0.80");
         cliOptions.addOption("s", true, "sample coefficient (0.10 - 1.0), default: 1.0");
