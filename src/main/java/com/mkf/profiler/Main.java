@@ -117,7 +117,7 @@ class Main {
         cliOptions.addOption("i", true,
                 "foreign key inclusion coefficient (0.0 - 1.0), default: 0.80");
         cliOptions.addOption("s", true, "sample coefficient (0.10 - 1.0), default: 1.0");
-        cliOptions.addOption("l", true, "limit number of lines to read and perform radom selection, default 100000");
+        cliOptions.addOption("l", true, "limit number of lines to read and perform random selection, default 100000");
         cliOptions.addOption("vo", false,
                 "visualize foreign key graph only, from the specified database");
         cliOptions.addOption("help", false, "display this message");

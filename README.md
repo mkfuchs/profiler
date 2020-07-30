@@ -20,11 +20,12 @@ usage: java -jar <path-to-jar>
              path>/csvprofiler.db
  -h          display this message
  -help       display this message
+ -hll        hyperloglog key discovery
  -i <arg>    foreign key inclusion coefficient (0.0 - 1.0), default: 0.80
  -k <arg>    maximum unique key size (1 - 5), default: 2
  -kd <arg>   minimum key density non-null count/ total count, 0.0 - 1.0,
-             defalt 1.0
- -l <arg>    limit number of lines to read and perform radom selection,
+             default 1.0
+ -l <arg>    limit number of lines to read and perform random selection,
              default 100000
  -og         draw foreign key dependency graph
  -oj         output information schema as json
