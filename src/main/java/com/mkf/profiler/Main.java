@@ -4,6 +4,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,20 +45,52 @@ class Main {
                     .filter(f -> FilenameUtils.isExtension(f.toString(), "csv"))
                     .filter(Files::isRegularFile)
                     .forEach(f -> tablenameFilepathMap.put(
-                            "\"" + FilenameUtils.getBaseName(f.toString()).trim().replaceAll("\"", "") + "\"",
+                            FilenameUtils.getBaseName(f.toString()).trim().replaceAll("\"", ""),
                             f.toString()));
 
             HllProfiler hllProfiler = new HllProfiler();
-
+            hllProfiler.createInformationTables(connection);
+            //pass 1
+            int data_source_num = 0;
             for (Map.Entry<String, String> entry : tablenameFilepathMap.entrySet()) {
-                System.err.println(String.format("hll profiling %s", entry.getValue()));
+                System.err.println(String.format("profile %s", entry.getValue()));
 
-                hllProfiler.createHllsFromCsv(entry.getValue(), profiler.keySize);
+                try {
+                    hllProfiler.discoverFieldProperties(connection, entry.getKey(), entry.getValue(), String.format("ds-%d", data_source_num++), profiler.keySize);
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
 
             }
-            hllProfiler.findFieldIntersections();
-            //make a second pass, and create hll's of potential foreign key permutations.
-            hllProfiler.findForeignKeys();
+            try {
+                System.err.println("discover unary unique and foreign keys");
+                hllProfiler.discoverFieldIntersections(connection);
+                hllProfiler.discoverUnaryForeignKeys(connection);
+            }
+
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+            //pass 2
+            Statement statement = connection.createStatement();
+            ResultSet dataSourceRs = statement.executeQuery("select name, location, cardinality from data_source" );
+
+            while (dataSourceRs.next()) {
+                String dataSourceName = dataSourceRs.getString(1);
+                String dataSourceLocation = dataSourceRs.getString(2);
+                System.err.println(String.format("discover composite unique keys %s", dataSourceLocation));
+                int dataSourceCardinality = dataSourceRs.getInt(3);
+                try {
+                    hllProfiler.discoverCompositeKeys(connection, dataSourceLocation, dataSourceName, dataSourceCardinality,profiler.keySize);
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+
+            connection.close();
 
         }
 

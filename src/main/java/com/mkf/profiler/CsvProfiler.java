@@ -407,10 +407,10 @@ class CsvProfiler {
 
             uniqueKeys.forEach(uk -> candidateKeys.removeIf(ck -> ck.containsAll(uk)));
             final int j = i;
-            Set<Set<String>> candidateKeysBySize = candidateKeys.stream().filter(s -> s.size() == j)
+            Set<Set<String>> candidateKeysBySize = candidateKeys.parallelStream().filter(s -> s.size() == j)
                     .collect(Collectors.toSet());
             for (Set<String> candidateKey : candidateKeysBySize) {
-                String fieldNames = candidateKey.stream().collect(Collectors.joining(", "));
+                String fieldNames = candidateKey.parallelStream().collect(Collectors.joining(", "));
                 String query = "select " + fieldNames + ", count(1) from " + tableName
                         + " group by " + fieldNames + " having count(1) > 1 limit 1";
                 ResultSet qrs = compositeKeyQuery.executeQuery(query);
@@ -424,7 +424,7 @@ class CsvProfiler {
                     }
 
                     String uniqueKeyName = tableName + "." + candidateKey.size() + "."
-                            + candidateKey.stream().collect(Collectors.joining("."));
+                            + candidateKey.parallelStream().collect(Collectors.joining("."));
                     uniqueKeyName = uniqueKeyName.replaceAll("[^A-Za-z0-9]", "_");
                     uniqueKeyInsert.clearParameters();
                     uniqueKeyInsert.setString(1, uniqueKeyName);
@@ -509,14 +509,14 @@ class CsvProfiler {
             }
 
             // no list of potential fk fields can be empty
-            if (foreignKeyFields.stream().noneMatch(ArrayList::isEmpty)) {
+            if (foreignKeyFields.parallelStream().noneMatch(ArrayList::isEmpty)) {
 
                 List<List<String>> foreignKeyCombinations = Lists
                         .cartesianProduct(foreignKeyFields);
                 // only check fk combinations of unique keys.
                 // eg [masterId, updateTimestamp] but not [masterId, masterId]
                 for (List<String> foreignKey : foreignKeyCombinations) {
-                    if (foreignKey.stream().allMatch(new HashSet<>()::add)) {
+                    if (foreignKey.parallelStream().allMatch(new HashSet<>()::add)) {
 
                         StringJoiner sj = new StringJoiner(" and ", "(", ")");
                         for (int i = 0; i < keyFields.size(); i++) {
