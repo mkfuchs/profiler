@@ -26,14 +26,6 @@ public class HllProfiler {
     double minKeyDensity = 1.0;
     double inclusionCoefficient = 0.80;
 
-    /*Map<Integer, String> csv = new HashMap<>();
-
-    Map<Integer, Map<Integer, String>> field = new HashMap<>();
-    Map<Integer, Map<Integer, Integer>> fieldValueCount = new HashMap<>();
-    Map<Integer, Map<Integer, HLL>> fieldHll = new HashMap<>();
-    Map<Integer, Map<List<Integer>, HLL>> csvUniqueKey = new HashMap<>();
-    Map<Integer, Map<Integer, Map<Integer, List<Integer>>>> intersectionField = new HashMap<>();*/
-
     //get the power set, then permute each element of the powerset.
     private static <T> Set<Set<T>> powerSet(Set<T> originalSet, int maxColumns) {
         Set<Set<T>> sets = new HashSet<>();
@@ -301,7 +293,9 @@ public class HllProfiler {
         List<Integer> fieldList= new ArrayList<>();
         ResultSet fieldRs = statement.executeQuery(
                 String.format("select ordinal from field where data_source_name = '%s' and density > 0.95 and uniqueness <= 0.95" +
-                        " and data_type != 'float'", dataSourceName));
+                        " and data_type != 'float' and ordinal not in " +
+                        "(select distinct field_ordinal from unique_key_field where data_source_name = '%s')",
+                        dataSourceName, dataSourceName));
         while (fieldRs.next()) {
             fieldList.add(fieldRs.getInt(1));
         }
@@ -320,10 +314,7 @@ public class HllProfiler {
         }
 
         keyArity = Math.min(safeNumComposites, keyArity);
-        List<Integer> colList = IntStream.rangeClosed(0, cols - 1)
-                .boxed().collect(Collectors.toList());
-        //set up the Map to hold the HLLs for all column permutations
-        powerSet = powerSet(new HashSet<>(colList), keyArity);
+        powerSet = powerSet(new HashSet<>(fieldList), keyArity);
         powerSet.removeIf(s -> s.isEmpty() || s.size() == 1);
 
         for (Set<Integer> keyCombination : powerSet) {
@@ -343,8 +334,9 @@ public class HllProfiler {
             for (Set<Integer> keyCombination : powerSet) {
                 List<Integer> fieldCombination = new ArrayList<>(new TreeSet<>(keyCombination));
                 combinationSb.setLength(0);
-                fieldCombination.forEach(col -> combinationSb.append(record.get(col)));
-                hllCombinations.get(fieldCombination).addRaw(hasher.hashUnencodedChars(combinationSb.toString()).asLong());
+                List<String> columnStings = new ArrayList<>();
+                fieldCombination.forEach(col -> columnStings.add(record.get(col)));
+                hllCombinations.get(fieldCombination).addRaw(hasher.hashUnencodedChars(String.join("-", columnStings)).asLong());
             }
 
             recordsSincePruning ++;
@@ -377,7 +369,6 @@ public class HllProfiler {
             HLL hll = entry.getValue();
             String uniqueKeyName = dataSourceName + "-" +
                     String.join("-",uniqueKey.stream().map(i -> String.valueOf(i)).collect(Collectors.toList()));
-            //System.out.printf("%s\n", uniqueKeyName);
             insertUniqueKeyStatement.setString(1, uniqueKeyName);
             insertUniqueKeyStatement.setString(2,dataSourceName);
             insertUniqueKeyStatement.setBytes(3, hll.toBytes());
